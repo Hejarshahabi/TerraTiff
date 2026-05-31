@@ -56,11 +56,8 @@ Built on `tifffile` + `numpy` + `pyproj` — **no GDAL installation required**.
 
 ## Installation
 
-### From the project directory (development mode)
-
 ```bash
-cd TerraTiff
-pip install -e .
+pip install terratiff
 ```
 
 ### Dependencies only
