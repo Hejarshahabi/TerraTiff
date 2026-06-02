@@ -293,6 +293,7 @@ class TerraTiff:
                 str(filepath),
                 out_data,
                 photometric="minisblack",
+                planarconfig="SEPARATE",
                 extratags=extratags,
             )
 
