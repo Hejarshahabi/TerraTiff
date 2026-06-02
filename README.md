@@ -1,6 +1,6 @@
 # 🌍 TerraTiff
 
-[![PyPI version](https://img.shields.io/badge/PyPi%20Package-0.1.7-green)](https://pypi.org/project/TerraTiff/) [![Downloads](https://pepy.tech/badge/terratiff)](https://pepy.tech/project/terratiff) [![Github](https://img.shields.io/badge/Github-TerraTiff-blueviolet)](https://github.com/Hejarshahabi/TerraTiff) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Hejar%20Shahabi-blue)](https://www.linkedin.com/in/hejarshahabi/) [![Twitter URL](https://img.shields.io/twitter/url?color=blue&label=Hejar%20Shahabi&style=social&url=https%3A%2F%2Ftwitter.com%2Fhejarshahabi)](https://twitter.com/hejarshahabi)
+[![PyPI version](https://img.shields.io/badge/PyPi%20Package-0.1.8-green)](https://pypi.org/project/TerraTiff/) [![Downloads](https://pepy.tech/badge/terratiff)](https://pepy.tech/project/terratiff) [![Github](https://img.shields.io/badge/Github-TerraTiff-blueviolet)](https://github.com/Hejarshahabi/TerraTiff) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Hejar%20Shahabi-blue)](https://www.linkedin.com/in/hejarshahabi/) [![Twitter URL](https://img.shields.io/twitter/url?color=blue&label=Hejar%20Shahabi&style=social&url=https%3A%2F%2Ftwitter.com%2Fhejarshahabi)](https://twitter.com/hejarshahabi)
 
 ![TerraTiff Logo](https://raw.githubusercontent.com/Hejarshahabi/TerraTiff/main/logo.png)
 
@@ -104,6 +104,7 @@ print("Saved! ✅")
 - `pixel_height` should be **negative** for standard north-up rasters
 - `origin_x` / `origin_y` are the coordinates of the **top-left corner** of the top-left pixel
 - The array can be 2-D (single band) or 3-D (multi-band)
+- By default, 3-D arrays are expected to be in `(bands, rows, cols)` format. If your array is `(rows, cols, bands)` (e.g. from an image library), pass `first_band=False` to automatically transpose it.
 
 ---
 
