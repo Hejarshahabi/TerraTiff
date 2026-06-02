@@ -112,7 +112,7 @@ class TerraTiff:
     # ── Class-method constructors ───────────────────────────────────────
 
     @classmethod
-    def open(cls, filepath: str | Path) -> "TerraTiff":
+    def open(cls, filepath: str | Path, first_band: bool = True) -> "TerraTiff":
         """
         Read a GeoTIFF file and return a :class:`TerraTiff` instance.
 
@@ -177,6 +177,7 @@ class TerraTiff:
             pixel_width=pixel_width,
             pixel_height=pixel_height,
             nodata=nodata,
+            first_band=first_band,
         )
 
     @classmethod
