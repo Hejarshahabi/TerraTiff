@@ -71,8 +71,9 @@ class TerraTiff:
         pixel_width: float,
         pixel_height: float,
         nodata: float | int | None = None,
+        first_band: bool = True,
     ) -> None:
-        self.data: np.ndarray = ensure_3d(np.asarray(data))
+        self.data: np.ndarray = ensure_3d(np.asarray(data), first_band=first_band)
         self.crs_info: CRSInfo = crs if isinstance(crs, CRSInfo) else parse_crs(crs)
         self.origin_x = float(origin_x)
         self.origin_y = float(origin_y)
@@ -188,6 +189,7 @@ class TerraTiff:
         pixel_height: float,
         crs: str | int = "WGS84",
         nodata: float | int | None = None,
+        first_band: bool = True,
     ) -> "TerraTiff":
         """
         Create a :class:`TerraTiff` from a plain numpy array.
@@ -210,6 +212,9 @@ class TerraTiff:
             ``"WGS84"``, ``"EPSG:32633"``, ``"UTM:33N"``, or int EPSG code.
         nodata : float or int, optional
             NoData sentinel.
+        first_band : bool, optional
+            If True (default), the array is expected to be ``(bands, rows, cols)``.
+            If False, it is transposed from ``(rows, cols, bands)`` to ``(bands, rows, cols)``.
         """
         return cls(
             data=array,
@@ -219,6 +224,7 @@ class TerraTiff:
             pixel_width=pixel_width,
             pixel_height=pixel_height,
             nodata=nodata,
+            first_band=first_band,
         )
 
     # ── Saving / exporting ──────────────────────────────────────────────

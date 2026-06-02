@@ -137,15 +137,19 @@ def nearest_resample(
     raise ValueError(f"Expected 2-D or 3-D array, got {data.ndim}-D")
 
 
-def ensure_3d(data: np.ndarray) -> np.ndarray:
+def ensure_3d(data: np.ndarray, first_band: bool = True) -> np.ndarray:
     """
     Normalise *data* to 3-D ``(bands, rows, cols)``.
 
     If *data* is 2-D it is expanded along axis 0 (single band).
+    If *first_band* is False, a 3-D array ``(rows, cols, bands)`` is transposed
+    to ``(bands, rows, cols)``.
     """
     if data.ndim == 2:
         return data[np.newaxis, :, :]
     if data.ndim == 3:
+        if not first_band:
+            return np.transpose(data, (2, 0, 1))
         return data
     raise ValueError(f"Expected 2-D or 3-D array, got {data.ndim}-D")
 
