@@ -9,7 +9,7 @@ with open(os.path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="terratiff",
-    version="0.1.10",
+    version="0.1.11",
     description="A lightweight, GDAL-free Python package for reading, writing, "
                 "and exporting GeoTIFF raster files.",
     long_description=long_description,

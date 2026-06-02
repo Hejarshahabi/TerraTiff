@@ -1,6 +1,6 @@
 # 🌍 TerraTiff
 
-[![PyPI version](https://img.shields.io/badge/PyPi%20Package-0.1.10-green)](https://pypi.org/project/TerraTiff/) [![Downloads](https://pepy.tech/badge/terratiff)](https://pepy.tech/project/terratiff) [![Github](https://img.shields.io/badge/Github-TerraTiff-blueviolet)](https://github.com/Hejarshahabi/TerraTiff) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Hejar%20Shahabi-blue)](https://www.linkedin.com/in/hejarshahabi/) [![Twitter URL](https://img.shields.io/twitter/url?color=blue&label=Hejar%20Shahabi&style=social&url=https%3A%2F%2Ftwitter.com%2Fhejarshahabi)](https://twitter.com/hejarshahabi)
+[![PyPI version](https://img.shields.io/badge/PyPi%20Package-0.1.11-green)](https://pypi.org/project/TerraTiff/) [![Downloads](https://pepy.tech/badge/terratiff)](https://pepy.tech/project/terratiff) [![Github](https://img.shields.io/badge/Github-TerraTiff-blueviolet)](https://github.com/Hejarshahabi/TerraTiff) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Hejar%20Shahabi-blue)](https://www.linkedin.com/in/hejarshahabi/) [![Twitter URL](https://img.shields.io/twitter/url?color=blue&label=Hejar%20Shahabi&style=social&url=https%3A%2F%2Ftwitter.com%2Fhejarshahabi)](https://twitter.com/hejarshahabi)
 
 ![TerraTiff Logo](https://raw.githubusercontent.com/Hejarshahabi/TerraTiff/main/logo.png)
 
@@ -30,7 +30,6 @@ Built on `tifffile` + `numpy` + `pyproj` — **no GDAL installation required**.
   - [13. Querying Spatial Metadata](#13-querying-spatial-metadata)
   - [14. Working with NoData Values](#14-working-with-nodata-values)
   - [15. UTM Zone Utilities](#15-utm-zone-utilities)
-  - [16. Complete Real-World Example](#16-complete-real-world-example)
 - [API Reference](#api-reference)
 - [Supported CRS Formats](#supported-crs-formats)
 - [Supported Data Types](#supported-data-types)
@@ -672,130 +671,7 @@ print(utm_zone_from_latlon(35.7, 139.7))  # (54, 'N') — Tokyo
 print(utm_zone_from_latlon(-22.9, -43.2)) # (23, 'S') — Rio de Janeiro
 ```
 
----
 
-### 16. Complete Real-World Example
-
-A full workflow: generate synthetic terrain data, derive slope, create a mask, clip, polygon-mask, and export everything.
-
-```python
-import numpy as np
-from terratiff import TerraTiff, utm_zone_from_latlon, utm_epsg
-
-# ─── Step 1: Define the area of interest ──────────────────────────
-lat, lon = 46.5, 11.3   # Somewhere in the Alps
-zone, hemi = utm_zone_from_latlon(lat, lon)
-crs_str = f"UTM:{zone}{hemi}"
-print(f"Using CRS: {crs_str} (EPSG:{utm_epsg(zone, hemi)})")
-
-# ─── Step 2: Create synthetic elevation data ──────────────────────
-rows, cols = 500, 500
-pixel_size = 30  # 30 m resolution
-
-# Generate a smooth terrain surface
-x = np.linspace(0, 4 * np.pi, cols)
-y = np.linspace(0, 4 * np.pi, rows)
-X, Y = np.meshgrid(x, y)
-elevation = (np.sin(X) * np.cos(Y) + 1) * 1500  # 0–3000 m range
-elevation = elevation.astype(np.float32)
-
-# ─── Step 3: Create and save the DEM ─────────────────────────────
-dem = TerraTiff.from_array(
-    elevation,
-    origin_x=650000, origin_y=5155000,
-    pixel_width=pixel_size, pixel_height=-pixel_size,
-    crs=crs_str,
-    nodata=-9999,
-)
-dem.save("tutorial_dem.tif", dtype="float32")
-print(f"DEM saved:  {dem.shape}, bounds={dem.get_bounds()}")
-
-# ─── Step 4: Compute slope (simple finite difference) ────────────
-dy, dx = np.gradient(elevation, pixel_size)
-slope = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2))).astype(np.float32)
-
-slope_raster = TerraTiff.from_array(
-    slope,
-    origin_x=dem.origin_x, origin_y=dem.origin_y,
-    pixel_width=pixel_size, pixel_height=-pixel_size,
-    crs=crs_str,
-)
-slope_raster.save("tutorial_slope.tif", dtype="float32")
-print(f"Slope saved: min={slope.min():.1f}°, max={slope.max():.1f}°")
-
-# ─── Step 5: Create a "steep terrain" binary mask ────────────────
-steep_mask = (slope > 30).astype(np.uint8)
-mask_raster = TerraTiff.from_array(
-    steep_mask,
-    origin_x=dem.origin_x, origin_y=dem.origin_y,
-    pixel_width=pixel_size, pixel_height=-pixel_size,
-    crs=crs_str,
-)
-mask_raster.save("tutorial_steep_mask.tif", dtype="binary")
-print(f"Mask saved:  {np.sum(steep_mask)} steep pixels")
-
-# ─── Step 6: Stack DEM + slope + mask into a multi-band raster ───
-stack = np.stack([elevation, slope, steep_mask.astype(np.float32)], axis=0)
-multi = TerraTiff.from_array(
-    stack,
-    origin_x=dem.origin_x, origin_y=dem.origin_y,
-    pixel_width=pixel_size, pixel_height=-pixel_size,
-    crs=crs_str,
-)
-multi.save("tutorial_stack.tif", dtype="float32")
-print(f"Stack saved: {multi.bands} bands")
-
-# ─── Step 7: Resample with different methods ─────────────────────
-coarse_nn  = dem.resample(pixel_width=100, pixel_height=-100, method="nearest")
-coarse_bl  = dem.resample(pixel_width=100, pixel_height=-100, method="bilinear")
-coarse_cb  = dem.resample(pixel_width=100, pixel_height=-100, method="cubic")
-coarse_avg = dem.resample(pixel_width=100, pixel_height=-100, method="average")
-
-coarse_nn.save("tutorial_100m_nearest.tif", dtype="int16")
-coarse_avg.save("tutorial_100m_average.tif", dtype="float32")
-print(f"Nearest 100m:  {coarse_nn.shape}")
-print(f"Average 100m:  {coarse_avg.shape}")
-
-# ─── Step 8: Clip to a sub-region ────────────────────────────────
-xmin, ymin, xmax, ymax = dem.get_bounds()
-cx = (xmin + xmax) / 2
-cy = (ymin + ymax) / 2
-clipped = dem.clip(cx - 3000, cy - 3000, cx + 3000, cy + 3000)
-clipped.save("tutorial_clipped.tif", dtype="float32")
-print(f"Clipped DEM:   {clipped.shape}, bounds={clipped.get_bounds()}")
-
-# ─── Step 9: Mask with a polygon ─────────────────────────────────
-center_polygon = [
-    (cx - 2000, cy - 2000),
-    (cx + 2000, cy - 2000),
-    (cx + 2000, cy + 2000),
-    (cx - 2000, cy + 2000),
-]
-poly_masked = dem.mask_with_polygon(center_polygon, nodata=-9999)
-poly_masked.save("tutorial_polygon_masked.tif", dtype="float32")
-print(f"Polygon mask:  {(poly_masked.data[0] != -9999).sum()} valid pixels")
-
-# ─── Step 10: Mask with a raster ─────────────────────────────────
-mask_data = (elevation > 1500).astype(np.uint8)
-mask_gt = TerraTiff.from_array(
-    mask_data,
-    origin_x=dem.origin_x, origin_y=dem.origin_y,
-    pixel_width=pixel_size, pixel_height=-pixel_size,
-    crs=crs_str,
-)
-raster_masked = dem.mask_with_raster(mask_gt, nodata=-9999)
-raster_masked.save("tutorial_raster_masked.tif", dtype="float32")
-print(f"Raster mask:   {(raster_masked.data[0] != -9999).sum()} valid pixels")
-
-# ─── Step 11: Convert to WGS 84 ─────────────────────────────────
-dem_wgs = dem.to_crs("WGS84")
-dem_wgs.save("tutorial_dem_wgs84.tif", dtype="float32")
-print(f"WGS84 DEM:     origin=({dem_wgs.origin_x:.4f}°, {dem_wgs.origin_y:.4f}°)")
-
-print("\n✅ Tutorial complete! All files saved.")
-```
-
----
 
 ## API Reference
 
